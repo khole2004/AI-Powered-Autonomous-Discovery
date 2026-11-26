@@ -1,0 +1,28 @@
+{
+  "paper_id": "paper_001",
+  "extracted_content": {
+    "text": "This research paper explores Artificial Intelligence and Machine Learning.",
+    "images": [
+      {
+        "image_id": "img_001",
+        "file_path": "outputs/images/img_001.png",
+        "description": "Research figure"
+      }
+    ],
+    "tables": [
+      {
+        "table_id": "table_001",
+        "data": [
+          ["Method", "Accuracy"],
+          ["Model A", "92.5%"]
+        ]
+      }
+    ]
+  },
+  "statistical_evaluation": {
+    "test_name": "Statistical test",
+    "p_value": null,
+    "confidence_interval": null,
+    "verdict": "pending"
+  }
+}
