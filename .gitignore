@@ -218,3 +218,10 @@ __marimo__/
 
 # Streamlit
 .streamlit/secrets.toml
+
+# --- Module 4: generated outputs (recreated by running the scripts) ---
+sample_pdfs/extracted_figures/
+sample_pdfs/extracted_figure_regions/
+sample_pdfs/tables_requiring_ocr/
+sample_pdfs/extracted_text.txt
+sample_pdfs/extracted_tables.txt
