@@ -1,0 +1,12 @@
+{
+    "paper_id": "paper_001",
+    "evaluation_status": "Pending",
+    "test_name": "Statistical test",
+    "p_value": null,
+    "confidence_interval": null,
+    "verdict": "pending",
+    "missing_fields": [
+        "p_value",
+        "confidence_interval"
+    ]
+}

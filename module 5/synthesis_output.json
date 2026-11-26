@@ -1,0 +1,15 @@
+{
+    "paper_id": "paper_001",
+    "research_summary": {
+        "text": "This research paper explores Artificial Intelligence and Machine Learning.",
+        "total_images": 1,
+        "total_tables": 1
+    },
+    "evaluation_summary": {
+        "test_name": "Statistical test",
+        "p_value": null,
+        "confidence_interval": null,
+        "verdict": "pending"
+    },
+    "processing_status": "completed"
+}
