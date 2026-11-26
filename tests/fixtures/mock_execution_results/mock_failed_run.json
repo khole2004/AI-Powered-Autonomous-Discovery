@@ -1,0 +1,10 @@
+{
+  "schema_version": "module4-temporary-test-schema-v0",
+  "experiment_id": "mock-failed-run",
+  "status": "failed",
+  "error": "Training diverged at epoch 3 (loss became NaN).",
+  "metrics": [
+    {"name": "accuracy", "value": 0.12, "n": 40}
+  ],
+  "comparisons": []
+}

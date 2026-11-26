@@ -75,6 +75,9 @@ python src/multimodal/vlm_client.py IMAGE --caption "Figure 2: ..." --mock
 - Layers: `parse_execution_result()` (the **only** schema-aware adapter) →
   internal format → `run_checks()` (statistics, never sees the input schema).
   When Module 3's schema arrives, only the adapter changes.
+- The adapter rejects (as `SchemaError` → agent outcome `invalid_input`)
+  non-JSON/binary files, `NaN`/`Infinity` values (use `null` for missing), and
+  duplicate names within `metrics` or within `comparisons`.
 - **Reported-value consistency:** recomputes p from t / z / F / chi-square
   statistics (respecting the reported rounding and `<` / `>` reports), checks
   degrees of freedom against sample sizes, confidence intervals against their
@@ -90,6 +93,51 @@ python src/multimodal/vlm_client.py IMAGE --caption "Figure 2: ..." --mock
 python src/critic/stats_checks.py                      # built-in example
 python src/critic/stats_checks.py my_result.json       # temporary-schema file
 ```
+
+### `src/critic/critic_agent.py` — Statistical Critic Agent
+
+The single entry point for reviewing an experiment result. It does **no
+statistics itself** and uses **no LLM**: it coordinates the adapter, the
+statistical checks and the report, and turns every situation into one safe,
+predictable result.
+
+```
+input (dict or JSON file)
+  -> stats_checks.parse_execution_result()   adapter (only schema-aware step)
+       invalid             -> outcome "invalid_input"     (no verdict)
+       status == "failed"  -> outcome "experiment_failed" (metrics NOT reviewed)
+  -> stats_checks.run_checks()               SciPy / statsmodels
+  -> report.build_critic_report()            verdict + explanation
+  -> outcome "reviewed"
+     unexpected exception  -> outcome "internal_error"    (details kept)
+```
+
+- `verdict` is set **only** when the outcome is `reviewed`; otherwise it is
+  `None`, so "not reviewed" can never read as "no issues".
+- Imports only `stats_checks` and `report` — independent of the PDF parser,
+  figure extractor and VLM client (enforced by tests).
+- The temporary schema gained optional `"status"` (`"completed"` / `"failed"`)
+  and `"error"` fields so failed runs can be recognised. Omitted status means
+  "not reported" and is noted, never assumed. Still **not** Module 3's schema.
+- Mock inputs for every scenario: `tests/fixtures/mock_execution_results/`.
+
+```python
+from critic.critic_agent import CriticAgent
+
+agent = CriticAgent()                           # alpha=0.05, d=0.5, power=0.80
+result = agent.review("results.json", job_id="job-42")
+print(result["outcome"], result["verdict"])     # e.g. reviewed issues_found
+print(result["message"])
+full_report = result["critic_report"]           # None unless reviewed
+```
+
+```
+python src/critic/critic_agent.py                                  # built-in example
+python src/critic/critic_agent.py tests/fixtures/mock_execution_results/*.json --out-dir critic_out
+```
+
+Exit code: `0` when every input was processed (including issues found and
+failed experiments), `1` if any input was invalid or an internal error occurred.
 
 ### `src/critic/report.py` — Critic Report
 

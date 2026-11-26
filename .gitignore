@@ -225,3 +225,4 @@ sample_pdfs/extracted_figure_regions/
 sample_pdfs/tables_requiring_ocr/
 sample_pdfs/extracted_text.txt
 sample_pdfs/extracted_tables.txt
+critic_out/

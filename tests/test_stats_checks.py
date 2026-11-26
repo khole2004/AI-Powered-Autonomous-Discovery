@@ -369,7 +369,8 @@ class TestAdapter(unittest.TestCase):
     def test_output_is_the_internal_format(self):
         data = sc.parse_execution_result(valid_input())
         self.assertEqual(set(data), {"schema_version", "is_temporary_schema",
-                                     "experiment_id", "metrics", "comparisons"})
+                                     "experiment_id", "status", "error",
+                                     "metrics", "comparisons"})
         self.assertIs(data["is_temporary_schema"], True)
         self.assertEqual(set(data["metrics"][0]), sc.METRIC_FIELDS)
         self.assertEqual(set(data["comparisons"][0]), sc.COMPARISON_FIELDS)
@@ -384,6 +385,27 @@ class TestAdapter(unittest.TestCase):
         data = sc.parse_execution_result({"schema_version": sc.TEMP_SCHEMA_VERSION})
         self.assertEqual((data["metrics"], data["comparisons"]), ([], []))
         self.assertIsNone(data["experiment_id"])
+
+    def test_status_and_error_are_optional_and_not_assumed(self):
+        data = sc.parse_execution_result(valid_input())
+        # Omitted status means "not reported" - never silently "completed".
+        self.assertIsNone(data["status"])
+        self.assertIsNone(data["error"])
+
+    def test_status_and_error_are_passed_through(self):
+        doc = dict(valid_input(), status="failed", error="CUDA out of memory")
+        data = sc.parse_execution_result(doc)
+        self.assertEqual((data["status"], data["error"]),
+                         ("failed", "CUDA out of memory"))
+        completed = sc.parse_execution_result(dict(valid_input(), status="completed"))
+        self.assertEqual(completed["status"], "completed")
+
+    def test_invalid_status_error_or_experiment_id(self):
+        for field, value in (("status", "crashed"), ("status", True),
+                             ("error", 42), ("experiment_id", 123)):
+            with self.subTest(field=field, value=value):
+                with self.assertRaisesRegex(sc.SchemaError, field):
+                    sc.parse_execution_result(dict(valid_input(), **{field: value}))
 
     def test_input_is_not_modified(self):
         original = valid_input()
@@ -424,6 +446,43 @@ class TestAdapter(unittest.TestCase):
                 with self.assertRaises(sc.SchemaError):
                     sc.parse_execution_result(doc)
 
+    def test_non_finite_numbers_are_rejected(self):
+        # json.loads accepts NaN / Infinity; they must never reach the checks.
+        for value in (float("nan"), float("inf"), float("-inf")):
+            for kind, field in (("metrics", "n"), ("metrics", "value"),
+                                ("comparisons", "statistic"),
+                                ("comparisons", "p_value")):
+                with self.subTest(value=value, field=f"{kind}.{field}"):
+                    doc = valid_input()
+                    doc[kind][0][field] = value
+                    with self.assertRaisesRegex(sc.SchemaError, "finite"):
+                        sc.parse_execution_result(doc)
+
+    def test_non_finite_numbers_from_json_file_are_rejected(self):
+        # The literal tokens NaN / Infinity in a JSON file (Python parses them).
+        for token in ("NaN", "Infinity", "-Infinity"):
+            with self.subTest(token=token):
+                doc = valid_input()
+                doc["metrics"][0]["n"] = "__PLACEHOLDER__"
+                text = json.dumps(doc).replace('"__PLACEHOLDER__"', token)
+                with self.assertRaisesRegex(sc.SchemaError, "finite"):
+                    sc.parse_execution_result(json.loads(text))
+
+    def test_duplicate_names_are_rejected(self):
+        for kind in ("metrics", "comparisons"):
+            with self.subTest(kind=kind):
+                doc = valid_input()
+                doc[kind].append(copy.deepcopy(doc[kind][0]))
+                with self.assertRaisesRegex(sc.SchemaError, "unique"):
+                    sc.parse_execution_result(doc)
+
+    def test_same_name_in_metrics_and_comparisons_is_allowed(self):
+        # Report targets are "metric:<name>" / "comparison:<name>", so these
+        # do not collide.
+        doc = valid_input()
+        doc["metrics"][0]["name"] = doc["comparisons"][0]["name"]
+        sc.parse_execution_result(doc)  # must not raise
+
     def test_typo_error_names_the_field(self):
         doc = valid_input()
         doc["comparisons"][0]["pvalue"] = 0.01
@@ -456,6 +515,12 @@ class TestLoadExecutionResult(unittest.TestCase):
         path = self.dir / "bad.json"
         path.write_text("{not json", encoding="utf-8")
         with self.assertRaises(sc.SchemaError):
+            sc.load_execution_result(path)
+
+    def test_binary_file_is_a_schema_error_not_a_crash(self):
+        path = self.dir / "paper.pdf"
+        path.write_bytes(b"%PDF-1.7\n\xff\xfe\x80\x81 binary \xc3\x28")
+        with self.assertRaisesRegex(sc.SchemaError, "UTF-8"):
             sc.load_execution_result(path)
 
 

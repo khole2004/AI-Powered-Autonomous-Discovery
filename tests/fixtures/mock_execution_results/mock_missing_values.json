@@ -1,0 +1,10 @@
+{
+  "schema_version": "module4-temporary-test-schema-v0",
+  "experiment_id": "mock-missing-values",
+  "metrics": [
+    {"name": "loss", "value": 0.21, "n": 500}
+  ],
+  "comparisons": [
+    {"name": "no_statistic_reported", "test": "z", "p_value": 0.04}
+  ]
+}

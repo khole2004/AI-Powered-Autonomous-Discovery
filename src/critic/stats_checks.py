@@ -50,7 +50,10 @@ Temporary test schema (v0):
 
     {
       "schema_version": "module4-temporary-test-schema-v0",   (required)
-      "experiment_id": "exp-001",                              (optional)
+      "experiment_id": "exp-001",                              (optional string)
+      "status": "completed",            (optional: "completed" or "failed";
+                                         omitted means "not reported")
+      "error": "CUDA out of memory",    (optional string, for failed runs)
       "metrics": [                                             (optional list)
         {"name": "accuracy",           (required)
          "value": 0.91,                (optional number)
@@ -128,6 +131,9 @@ SUPPORTED_TESTS = {
 }
 
 P_OPERATORS = ("=", "<", "<=", ">")
+
+# Optional run status in the temporary schema. Omitted = "not reported".
+EXPERIMENT_STATUSES = ("completed", "failed")
 
 METRIC_FIELDS = {"name", "value", "n", "ci_lower", "ci_upper", "ci_level"}
 COMPARISON_FIELDS = {"name", "test", "statistic", "df", "df2", "p_value",
@@ -514,7 +520,15 @@ def load_execution_result(path):
     if not path.is_file():
         raise FileNotFoundError(f"ExecutionResult file not found: {path}")
     try:
-        return json.loads(path.read_text(encoding="utf-8"))
+        text = path.read_text(encoding="utf-8")
+    except UnicodeDecodeError as error:
+        # e.g. a PDF or other binary file passed by mistake
+        raise SchemaError(
+            f"{path} is not a UTF-8 text/JSON file: {error}") from error
+    except OSError as error:
+        raise SchemaError(f"{path} could not be read: {error}") from error
+    try:
+        return json.loads(text)
     except json.JSONDecodeError as error:
         raise SchemaError(f"{path} is not valid JSON: {error}") from error
 
@@ -541,6 +555,24 @@ def _validate_record(record, allowed, kind, index):
             raise SchemaError(
                 f"{where} ('{record['name']}'): '{field}' must be a number, "
                 f"got {value!r}.")
+        # Python's json module accepts NaN / Infinity, which are not valid
+        # reported values. Reject them instead of letting them reach SciPy.
+        if not math.isfinite(value):
+            raise SchemaError(
+                f"{where} ('{record['name']}'): '{field}' must be a finite "
+                f"number, got {value!r}. Use null for a missing value.")
+
+
+def _reject_duplicate_names(records, kind):
+    """Each name must be unique within its list - the report keys by name."""
+    seen = {}
+    for i, record in enumerate(records):
+        name = record["name"].strip()
+        if name in seen:
+            raise SchemaError(
+                f"{kind}[{i}] repeats the name '{name}' already used by "
+                f"{kind}[{seen[name]}]. Names must be unique within '{kind}'.")
+        seen[name] = i
 
 
 def parse_execution_result(data):
@@ -558,6 +590,8 @@ def parse_execution_result(data):
           "schema_version": str,         where the data came from
           "is_temporary_schema": bool,   True for this adapter
           "experiment_id": str | None,
+          "status": "completed" | "failed" | None,   None = not reported
+          "error": str | None,           failure description, if any
           "metrics": [
             {"name", "value", "n", "ci_lower", "ci_upper", "ci_level"}
           ],
@@ -580,10 +614,25 @@ def parse_execution_result(data):
             f"schema '{TEMP_SCHEMA_VERSION}' is supported until Module 3's "
             f"real ExecutionResult schema is available. Nothing was guessed.")
 
-    unknown_top = set(data) - {"schema_version", "experiment_id",
-                               "metrics", "comparisons"}
+    unknown_top = set(data) - {"schema_version", "experiment_id", "status",
+                               "error", "metrics", "comparisons"}
     if unknown_top:
         raise SchemaError(f"Unknown top-level field(s): {sorted(unknown_top)}.")
+
+    experiment_id = data.get("experiment_id")
+    if experiment_id is not None and not isinstance(experiment_id, str):
+        raise SchemaError(
+            f"'experiment_id' must be a string, got {experiment_id!r}.")
+
+    status = data.get("status")
+    if status is not None and status not in EXPERIMENT_STATUSES:
+        raise SchemaError(
+            f"'status' must be one of {EXPERIMENT_STATUSES} (or omitted), "
+            f"got {status!r}.")
+
+    error = data.get("error")
+    if error is not None and not isinstance(error, str):
+        raise SchemaError(f"'error' must be a string, got {error!r}.")
 
     metrics = data.get("metrics", [])
     comparisons = data.get("comparisons", [])
@@ -595,6 +644,7 @@ def parse_execution_result(data):
     for i, record in enumerate(metrics):
         _validate_record(record, METRIC_FIELDS, "metrics", i)
         normalised_metrics.append({f: record.get(f) for f in METRIC_FIELDS})
+    _reject_duplicate_names(metrics, "metrics")
 
     normalised_comparisons = []
     for i, record in enumerate(comparisons):
@@ -613,10 +663,13 @@ def parse_execution_result(data):
         normalised["p_operator"] = operator
         normalised["tails"] = record.get("tails", 2)
         normalised_comparisons.append(normalised)
+    _reject_duplicate_names(comparisons, "comparisons")
 
     return {"schema_version": version,
             "is_temporary_schema": True,
-            "experiment_id": data.get("experiment_id"),
+            "experiment_id": experiment_id,
+            "status": status,
+            "error": error,
             "metrics": normalised_metrics,
             "comparisons": normalised_comparisons}
 

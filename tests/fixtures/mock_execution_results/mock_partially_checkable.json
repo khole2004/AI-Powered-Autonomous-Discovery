@@ -1,0 +1,10 @@
+{
+  "schema_version": "module4-temporary-test-schema-v0",
+  "experiment_id": "mock-partially-checkable",
+  "status": "completed",
+  "comparisons": [
+    {"name": "fully_reported", "test": "two_sample_t",
+     "statistic": 2.5, "df": 126, "p_value": 0.014, "n_a": 64, "n_b": 64},
+    {"name": "no_statistic_reported", "test": "z", "p_value": 0.04}
+  ]
+}
