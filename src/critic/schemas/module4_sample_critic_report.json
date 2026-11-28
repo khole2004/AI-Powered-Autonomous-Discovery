@@ -1,0 +1,417 @@
+{
+  "report_version": "module4-critic-report-v0",
+  "job_id": "job-42",
+  "job_id_source": "provided",
+  "generated_at": "2026-11-28T04:27:59+00:00",
+  "schema_version": "module4-temporary-test-schema-v0",
+  "is_temporary_schema": true,
+  "settings": {
+    "alpha": 0.05,
+    "target_effect": 0.5,
+    "target_power": 0.8,
+    "min_sample": 30
+  },
+  "verdict": "issues_found",
+  "explanation": "Problems were found in 2 of 5 result(s): f1_score, model_b_vs_baseline.",
+  "summary": {
+    "entries": 5,
+    "issues_found": 2,
+    "concerns": 0,
+    "no_issues_detected": 3,
+    "inconclusive": 0,
+    "checks": {
+      "pass": 14,
+      "warning": 4,
+      "fail": 2,
+      "skipped": 0
+    }
+  },
+  "entries": [
+    {
+      "target": "metric:accuracy",
+      "kind": "metric",
+      "name": "accuracy",
+      "test_name": null,
+      "p_value": null,
+      "confidence_interval": {
+        "estimate": 0.91,
+        "lower": 0.87,
+        "upper": 0.95,
+        "level": 0.95
+      },
+      "effect_size": null,
+      "unavailable_fields": [
+        "p_value",
+        "effect_size"
+      ],
+      "verdict": "no_issues_detected",
+      "explanation": "The checks that could run found no problems. This does not confirm that the result is correct or that the experiment was sound; it only means the checks that could run found no inconsistencies.",
+      "problems": [],
+      "concerns": [],
+      "not_checked": [],
+      "checks": [
+        {
+          "check": "value_ranges",
+          "target": "metric:accuracy",
+          "status": "pass",
+          "message": "All values are within valid ranges.",
+          "details": {}
+        },
+        {
+          "check": "confidence_interval",
+          "target": "metric:accuracy",
+          "status": "pass",
+          "message": "Estimate 0.91 lies inside [0.87, 0.95].",
+          "details": {
+            "value": 0.91,
+            "ci_lower": 0.87,
+            "ci_upper": 0.95,
+            "ci_level": 0.95
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "metric:accuracy",
+          "status": "pass",
+          "message": "n = 200 meets the threshold of 30.",
+          "details": {
+            "n": 200,
+            "min_sample": 30
+          }
+        }
+      ]
+    },
+    {
+      "target": "metric:f1_score",
+      "kind": "metric",
+      "name": "f1_score",
+      "test_name": null,
+      "p_value": null,
+      "confidence_interval": {
+        "estimate": 0.97,
+        "lower": 0.8,
+        "upper": 0.94,
+        "level": 0.95
+      },
+      "effect_size": null,
+      "unavailable_fields": [
+        "p_value",
+        "effect_size"
+      ],
+      "verdict": "issues_found",
+      "explanation": "1 problem(s) found: Estimate 0.97 lies outside its interval [0.8, 0.94]. Also 1 concern(s): n = 12 is below the small-sample threshold of 30; results may be unstable.",
+      "problems": [
+        "Estimate 0.97 lies outside its interval [0.8, 0.94]."
+      ],
+      "concerns": [
+        "n = 12 is below the small-sample threshold of 30; results may be unstable."
+      ],
+      "not_checked": [],
+      "checks": [
+        {
+          "check": "value_ranges",
+          "target": "metric:f1_score",
+          "status": "pass",
+          "message": "All values are within valid ranges.",
+          "details": {}
+        },
+        {
+          "check": "confidence_interval",
+          "target": "metric:f1_score",
+          "status": "fail",
+          "message": "Estimate 0.97 lies outside its interval [0.8, 0.94].",
+          "details": {
+            "value": 0.97,
+            "ci_lower": 0.8,
+            "ci_upper": 0.94,
+            "ci_level": 0.95
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "metric:f1_score",
+          "status": "warning",
+          "message": "n = 12 is below the small-sample threshold of 30; results may be unstable.",
+          "details": {
+            "n": 12,
+            "min_sample": 30
+          }
+        }
+      ]
+    },
+    {
+      "target": "comparison:model_a_vs_baseline",
+      "kind": "comparison",
+      "name": "model_a_vs_baseline",
+      "test_name": "two_sample_t",
+      "p_value": {
+        "reported": 0.002,
+        "operator": "=",
+        "recomputed": 0.002388,
+        "consistency": "pass"
+      },
+      "confidence_interval": null,
+      "effect_size": {
+        "value": 0.548,
+        "measure": "cohens_d",
+        "approximate": false,
+        "source": "derived from the t statistic and sample sizes"
+      },
+      "unavailable_fields": [
+        "confidence_interval"
+      ],
+      "verdict": "no_issues_detected",
+      "explanation": "The checks that could run found no problems. This does not confirm that the result is correct or that the experiment was sound; it only means the checks that could run found no inconsistencies.",
+      "problems": [],
+      "concerns": [],
+      "not_checked": [],
+      "checks": [
+        {
+          "check": "value_ranges",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "All values are within valid ranges.",
+          "details": {}
+        },
+        {
+          "check": "p_value_consistency",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "Reported p = 0.002 matches the recomputed p = 0.002388.",
+          "details": {
+            "test": "two_sample_t",
+            "statistic": 3.1,
+            "df": 126,
+            "df2": null,
+            "tails": 2,
+            "reported_p": 0.002,
+            "p_operator": "=",
+            "recomputed_p": 0.002388,
+            "alpha": 0.05,
+            "rounding_tolerance": 0.0005
+          }
+        },
+        {
+          "check": "degrees_of_freedom",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "df = 126 is consistent with the sample sizes.",
+          "details": {
+            "test": "two_sample_t",
+            "df": 126,
+            "n_a": 64,
+            "n_b": 64,
+            "expected_min": 126,
+            "expected_max": 126
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "n_a = 64 meets the threshold of 30.",
+          "details": {
+            "n_a": 64,
+            "min_sample": 30
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "n_b = 64 meets the threshold of 30.",
+          "details": {
+            "n_b": 64,
+            "min_sample": 30
+          }
+        },
+        {
+          "check": "statistical_power",
+          "target": "comparison:model_a_vs_baseline",
+          "status": "pass",
+          "message": "Power to detect d = 0.5 is 80% (target 80%).",
+          "details": {
+            "design": "two_sample",
+            "n_a": 64,
+            "n_b": 64,
+            "alpha": 0.05,
+            "tails": 2,
+            "target_effect": 0.5,
+            "target_power": 0.8,
+            "power_at_target_effect": 0.8015,
+            "minimum_detectable_effect": 0.4991,
+            "required_n_per_group": 64
+          }
+        }
+      ]
+    },
+    {
+      "target": "comparison:model_b_vs_baseline",
+      "kind": "comparison",
+      "name": "model_b_vs_baseline",
+      "test_name": "two_sample_t",
+      "p_value": {
+        "reported": 0.03,
+        "operator": "=",
+        "recomputed": 0.237568,
+        "consistency": "fail"
+      },
+      "confidence_interval": null,
+      "effect_size": {
+        "value": 0.3795,
+        "measure": "cohens_d",
+        "approximate": false,
+        "source": "derived from the t statistic and sample sizes"
+      },
+      "unavailable_fields": [
+        "confidence_interval"
+      ],
+      "verdict": "issues_found",
+      "explanation": "1 problem(s) found: Reported p = 0.03 but the statistic gives p = 0.2376; this changes the conclusion at alpha = 0.05. Also 3 concern(s): n_a = 20 is below the small-sample threshold of 30; results may be unstable. n_b = 20 is below the small-sample threshold of 30; results may be unstable. Power to detect d = 0.5 is only 34% (target 80%); the smallest reliably detectable effect is d = 0.91. About 64 would be needed (required n per group).",
+      "problems": [
+        "Reported p = 0.03 but the statistic gives p = 0.2376; this changes the conclusion at alpha = 0.05."
+      ],
+      "concerns": [
+        "n_a = 20 is below the small-sample threshold of 30; results may be unstable.",
+        "n_b = 20 is below the small-sample threshold of 30; results may be unstable.",
+        "Power to detect d = 0.5 is only 34% (target 80%); the smallest reliably detectable effect is d = 0.91. About 64 would be needed (required n per group)."
+      ],
+      "not_checked": [],
+      "checks": [
+        {
+          "check": "value_ranges",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "pass",
+          "message": "All values are within valid ranges.",
+          "details": {}
+        },
+        {
+          "check": "p_value_consistency",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "fail",
+          "message": "Reported p = 0.03 but the statistic gives p = 0.2376; this changes the conclusion at alpha = 0.05.",
+          "details": {
+            "test": "two_sample_t",
+            "statistic": 1.2,
+            "df": 38,
+            "df2": null,
+            "tails": 2,
+            "reported_p": 0.03,
+            "p_operator": "=",
+            "recomputed_p": 0.237568,
+            "alpha": 0.05,
+            "rounding_tolerance": 0.005,
+            "conclusion_changes": true
+          }
+        },
+        {
+          "check": "degrees_of_freedom",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "pass",
+          "message": "df = 38 is consistent with the sample sizes.",
+          "details": {
+            "test": "two_sample_t",
+            "df": 38,
+            "n_a": 20,
+            "n_b": 20,
+            "expected_min": 38,
+            "expected_max": 38
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "warning",
+          "message": "n_a = 20 is below the small-sample threshold of 30; results may be unstable.",
+          "details": {
+            "n_a": 20,
+            "min_sample": 30
+          }
+        },
+        {
+          "check": "sample_size",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "warning",
+          "message": "n_b = 20 is below the small-sample threshold of 30; results may be unstable.",
+          "details": {
+            "n_b": 20,
+            "min_sample": 30
+          }
+        },
+        {
+          "check": "statistical_power",
+          "target": "comparison:model_b_vs_baseline",
+          "status": "warning",
+          "message": "Power to detect d = 0.5 is only 34% (target 80%); the smallest reliably detectable effect is d = 0.91. About 64 would be needed (required n per group).",
+          "details": {
+            "design": "two_sample",
+            "n_a": 20,
+            "n_b": 20,
+            "alpha": 0.05,
+            "tails": 2,
+            "target_effect": 0.5,
+            "target_power": 0.8,
+            "power_at_target_effect": 0.3379,
+            "minimum_detectable_effect": 0.9091,
+            "required_n_per_group": 64
+          }
+        }
+      ]
+    },
+    {
+      "target": "comparison:ablation_chi2",
+      "kind": "comparison",
+      "name": "ablation_chi2",
+      "test_name": "chi2",
+      "p_value": {
+        "reported": 0.001,
+        "operator": "<",
+        "recomputed": 9.7e-05,
+        "consistency": "pass"
+      },
+      "confidence_interval": null,
+      "effect_size": null,
+      "unavailable_fields": [
+        "confidence_interval",
+        "effect_size"
+      ],
+      "verdict": "no_issues_detected",
+      "explanation": "The checks that could run found no problems. This does not confirm that the result is correct or that the experiment was sound; it only means the checks that could run found no inconsistencies.",
+      "problems": [],
+      "concerns": [],
+      "not_checked": [],
+      "checks": [
+        {
+          "check": "value_ranges",
+          "target": "comparison:ablation_chi2",
+          "status": "pass",
+          "message": "All values are within valid ranges.",
+          "details": {}
+        },
+        {
+          "check": "p_value_consistency",
+          "target": "comparison:ablation_chi2",
+          "status": "pass",
+          "message": "Reported p < 0.001 matches the recomputed p = 9.67e-05.",
+          "details": {
+            "test": "chi2",
+            "statistic": 15.2,
+            "df": 1,
+            "df2": null,
+            "tails": 2,
+            "reported_p": 0.001,
+            "p_operator": "<",
+            "recomputed_p": 9.7e-05,
+            "alpha": 0.05
+          }
+        }
+      ]
+    }
+  ],
+  "notes": [
+    "Input used the TEMPORARY test schema 'module4-temporary-test-schema-v0'. It is not Module 3's ExecutionResult, and no compatibility with Module 3 is implied.",
+    "Effect sizes are DERIVED from t statistics and sample sizes; they were not reported in the input.",
+    "Statistical power is computed for a target effect of d = 0.5 chosen in advance, not from the observed effect (post-hoc 'observed power' is not used).",
+    "Verdicts describe internal statistical consistency only; they do not establish whether the findings are true."
+  ]
+}

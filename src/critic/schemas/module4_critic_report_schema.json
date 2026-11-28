@@ -1,0 +1,190 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "module4-critic-report-v0",
+  "title": "Module 4 Critic Report (PROVISIONAL, report_version module4-critic-report-v0)",
+  "description": "Describes the JSON produced by src/critic/report.py (build_critic_report / save_report / --json) as currently implemented. PROVISIONAL - NOT a final contract: the input is still Module 4's temporary test schema 'module4-temporary-test-schema-v0', because Module 3's actual ExecutionResult schema has not been received. Fields or values may change when Module 3 integration is done. Derived from the generated sample module4_sample_critic_report.json and the code paths in report.py / stats_checks.py.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "report_version", "job_id", "job_id_source", "generated_at",
+    "schema_version", "is_temporary_schema", "settings", "verdict",
+    "explanation", "summary", "entries", "notes"
+  ],
+  "properties": {
+    "report_version": {
+      "const": "module4-critic-report-v0",
+      "description": "Version of this report format (provisional)."
+    },
+    "job_id": {
+      "type": ["string", "null"],
+      "description": "Job identifier: the one provided by the caller, else the input's experiment_id, else null (never invented)."
+    },
+    "job_id_source": {
+      "enum": ["provided", "experiment_id (temporary schema)", null],
+      "description": "Where job_id came from; null when job_id is null."
+    },
+    "generated_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 timestamp (UTC by default, seconds precision). A caller may pass its own value."
+    },
+    "schema_version": {
+      "type": "string",
+      "description": "Input schema the report was built from. Currently always 'module4-temporary-test-schema-v0'."
+    },
+    "is_temporary_schema": {
+      "type": "boolean",
+      "description": "True while the input is the Module 4 temporary test schema (not Module 3's ExecutionResult)."
+    },
+    "settings": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["alpha", "target_effect", "target_power", "min_sample"],
+      "properties": {
+        "alpha": {"type": "number", "description": "Significance level (default 0.05)."},
+        "target_effect": {"type": "number", "description": "Target Cohen's d for power analysis (default 0.5)."},
+        "target_power": {"type": "number", "description": "Target power (default 0.80)."},
+        "min_sample": {"type": "number", "description": "Small-sample heuristic threshold (default 30)."}
+      }
+    },
+    "verdict": {
+      "enum": ["issues_found", "concerns", "no_issues_detected", "incomplete", "inconclusive"],
+      "description": "Overall job verdict. 'incomplete' = some results checked with no issues, others could not be assessed."
+    },
+    "explanation": {"type": "string", "description": "Plain-language summary built only from check results."},
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["entries", "issues_found", "concerns", "no_issues_detected", "inconclusive", "checks"],
+      "properties": {
+        "entries": {"type": "integer", "minimum": 0, "description": "Number of entries."},
+        "issues_found": {"type": "integer", "minimum": 0},
+        "concerns": {"type": "integer", "minimum": 0},
+        "no_issues_detected": {"type": "integer", "minimum": 0},
+        "inconclusive": {"type": "integer", "minimum": 0},
+        "checks": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["pass", "warning", "fail", "skipped"],
+          "description": "Count of individual check results by status.",
+          "properties": {
+            "pass": {"type": "integer", "minimum": 0},
+            "warning": {"type": "integer", "minimum": 0},
+            "fail": {"type": "integer", "minimum": 0},
+            "skipped": {"type": "integer", "minimum": 0}
+          }
+        }
+      }
+    },
+    "entries": {
+      "type": "array",
+      "items": {"$ref": "#/$defs/entry"},
+      "description": "One entry per metric, then per comparison, in input order."
+    },
+    "notes": {
+      "type": "array",
+      "items": {"type": "string"},
+      "description": "Standing caveats (temporary schema, derived effect sizes, power method, scope of verdicts)."
+    }
+  },
+  "$defs": {
+    "checkStatus": {"enum": ["pass", "warning", "fail", "skipped"]},
+    "entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "target", "kind", "name", "test_name", "p_value",
+        "confidence_interval", "effect_size", "unavailable_fields",
+        "verdict", "explanation", "problems", "concerns", "not_checked", "checks"
+      ],
+      "properties": {
+        "target": {"type": "string", "description": "'<kind>:<name>', e.g. 'comparison:model_a_vs_baseline'."},
+        "kind": {
+          "enum": ["metric", "comparison", "unknown"],
+          "description": "'unknown' is only produced defensively for checks whose target matches no record (not expected in normal use)."
+        },
+        "name": {"type": "string", "description": "Record name; unique within its kind."},
+        "test_name": {
+          "anyOf": [
+            {"enum": ["t", "two_sample_t", "welch_t", "paired_t", "one_sample_t", "z", "f", "anova", "chi2", "chi_square"]},
+            {"type": "null"}
+          ],
+          "description": "Statistical test for comparisons; null for metrics."
+        },
+        "p_value": {
+          "anyOf": [{"$ref": "#/$defs/pValue"}, {"type": "null"}],
+          "description": "null when no p-value was reported."
+        },
+        "confidence_interval": {
+          "anyOf": [{"$ref": "#/$defs/confidenceInterval"}, {"type": "null"}],
+          "description": "Interval as reported; null when the record has no interval (comparisons never carry one in the temporary schema)."
+        },
+        "effect_size": {
+          "anyOf": [{"$ref": "#/$defs/effectSize"}, {"type": "null"}],
+          "description": "DERIVED effect size for t-tests only; null otherwise."
+        },
+        "unavailable_fields": {
+          "type": "array",
+          "items": {"enum": ["test_name", "p_value", "confidence_interval", "effect_size"]},
+          "description": "Which of the four fields above are null (test_name is never listed for metrics)."
+        },
+        "verdict": {"enum": ["issues_found", "concerns", "no_issues_detected", "inconclusive"]},
+        "explanation": {"type": "string"},
+        "problems": {"type": "array", "items": {"type": "string"}, "description": "Messages of checks with status 'fail'."},
+        "concerns": {"type": "array", "items": {"type": "string"}, "description": "Messages of checks with status 'warning'."},
+        "not_checked": {"type": "array", "items": {"type": "string"}, "description": "Messages of checks with status 'skipped'."},
+        "checks": {"type": "array", "items": {"$ref": "#/$defs/checkResult"}}
+      }
+    },
+    "pValue": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["reported", "operator", "recomputed", "consistency"],
+      "properties": {
+        "reported": {"type": "number", "description": "p-value as reported in the input."},
+        "operator": {"enum": ["=", "<", "<=", ">"], "description": "How p was reported, e.g. '<' for 'p < 0.001'."},
+        "recomputed": {"type": ["number", "null"], "description": "p recomputed from the statistic by SciPy; null if the check was skipped."},
+        "consistency": {"$ref": "#/$defs/checkStatus", "description": "Status of the p_value_consistency check."}
+      }
+    },
+    "confidenceInterval": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["estimate", "lower", "upper", "level"],
+      "properties": {
+        "estimate": {"type": ["number", "null"]},
+        "lower": {"type": ["number", "null"]},
+        "upper": {"type": ["number", "null"]},
+        "level": {"type": ["number", "null"], "description": "e.g. 0.95"}
+      }
+    },
+    "effectSize": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["value", "measure", "approximate", "source"],
+      "properties": {
+        "value": {"type": "number"},
+        "measure": {"enum": ["cohens_d", "cohens_dz"]},
+        "approximate": {"type": "boolean", "description": "True for Welch t (approximation)."},
+        "source": {"const": "derived from the t statistic and sample sizes"}
+      }
+    },
+    "checkResult": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["check", "target", "status", "message", "details"],
+      "properties": {
+        "check": {
+          "enum": ["p_value_consistency", "degrees_of_freedom", "confidence_interval", "value_ranges", "sample_size", "statistical_power"]
+        },
+        "target": {"type": "string"},
+        "status": {"$ref": "#/$defs/checkStatus"},
+        "message": {"type": "string"},
+        "details": {
+          "type": "object",
+          "description": "Check-specific values (e.g. recomputed_p, rounding_tolerance, power_at_target_effect). Keys differ by check and by situation, so they are NOT fixed by this provisional schema; consumers should treat them as informational."
+        }
+      }
+    }
+  }
+}
